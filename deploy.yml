@@ -6,12 +6,9 @@
     downloads_dir: ~/.ansible/downloads
     munitions_dir: ~/.ansible/munitions
     pyenv_dir: ~/.pyenv
-    python2:
-      dir: ~/opt/python2
-      version: 2.7.18
-    python3:
-      dir: ~/opt/python3
-      version: 3.7.9
+    pythons:
+      - { dir: ~/opt/python2, version: 2.7.18 }
+      - { dir: ~/opt/python3, version: 3.7.9 }
 
   tasks:
     - name: Make downloads dir
@@ -48,37 +45,24 @@
         repo: https://github.com/pyenv/pyenv.git
         dest: "{{ pyenv_dir }}"
 
-    - name: Install Python2
+    - name: Install Python
       shell:
-        cmd: "{{ pyenv_dir }}/bin/pyenv install {{ python2.version }}"
-        creates: "{{ pyenv_dir }}/versions/{{ python2.version }}"
+        cmd: "{{ pyenv_dir }}/bin/pyenv install {{ item.version }}"
+        creates: "{{ pyenv_dir }}/versions/{{ item.version }}"
+      loop: "{{ pythons }}"
 
-    - name: Install Python3
-      shell:
-        cmd: "{{ pyenv_dir }}/bin/pyenv install {{ python3.version }}"
-        creates: "{{ pyenv_dir }}/versions/{{ python3.version }}"
-
-    - name: Symlink Python2
+    - name: Symlink Python
       file:
-        src: "{{ pyenv_dir }}/versions/{{ python2.version }}"
-        dest: "{{ python2.dir }}"
+        src: "{{ pyenv_dir }}/versions/{{ item.version }}"
+        dest: "{{ item.dir }}"
         state: link
+      loop: "{{ pythons }}"
 
-    - name: Symlink Python3
-      file:
-        src: "{{ pyenv_dir }}/versions/{{ python3.version }}"
-        dest: "{{ python3.dir }}"
-        state: link
-
-    - name: Install Python2 deps
+    - name: Install Python deps
       pip:
         requirements: "{{ munitions_dir }}/requirements.txt"
-        executable: "{{ python2.dir }}/bin/pip"
-
-    - name: Install Python3 deps
-      pip:
-        requirements: "{{ munitions_dir }}/requirements.txt"
-        executable: "{{ python3.dir }}/bin/pip"
+        executable: "{{ item.dir }}/bin/pip"
+      loop: "{{ pythons }}"
 
     # TODO - SSH keys
     # TODO - dot files
