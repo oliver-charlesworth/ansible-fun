@@ -3,67 +3,85 @@
   remote_user: bob
 
   vars:
+    downloads_dir: ~/.ansible/downloads
+    munitions_dir: ~/.ansible/munitions
+    pyenv_dir: ~/.pyenv
     python2:
-      path: ~/opt/python2
+      dir: ~/opt/python2
       version: 2.7.18
     python3:
-      path: ~/opt/python3
+      dir: ~/opt/python3
       version: 3.7.9
 
   tasks:
-    - name: Sync munitions
-      synchronize:
-        src: munitions/
-        dest: ~/munitions/
-        delete: yes
-        recursive: yes
+    - name: Make downloads dir
+      file:
+        path: "{{ downloads_dir }}"
+        state: directory
 
-    - name: Make opt/
+    - name: Make opt dir
       file:
         path: ~/opt/
         state: directory
 
-    # Obtained from https://download.java.net/java/GA/jdk15.0.1/51f4f36ad4ef43e39d0dfdbaf6549e32/9/GPL/openjdk-15.0.1_linux-x64_bin.tar.gz
-    # SHA256: 83ec3a7b1649a6b31e021cde1e58ab447b07fb8173489f27f427e731c89ed84a
+    - name: Sync munitions
+      synchronize:
+        src: munitions/
+        dest: "{{ munitions_dir }}"
+        delete: yes
+        recursive: yes
+
+    - name: Get JDK15
+      get_url:
+        url: https://download.java.net/java/GA/jdk15.0.1/51f4f36ad4ef43e39d0dfdbaf6549e32/9/GPL/openjdk-15.0.1_linux-x64_bin.tar.gz
+        dest: "{{ downloads_dir }}/jdk15.tar.gz"
+        checksum: sha256:83ec3a7b1649a6b31e021cde1e58ab447b07fb8173489f27f427e731c89ed84a
+
     - name: Deploy JDK15
       unarchive:
-        src: ~/munitions/downloads/openjdk-15.0.1_linux-x64_bin.tar.gz
+        src: "{{ downloads_dir }}/jdk15.tar.gz"
         dest: ~/opt/
         remote_src: yes
 
     - name: Get pyenv
       git:
         repo: https://github.com/pyenv/pyenv.git
-        dest: ~/.pyenv
+        dest: "{{ pyenv_dir }}"
 
     - name: Install Python2
       shell:
-        cmd: ~/.pyenv/bin/pyenv install {{ python2.version }}
-        creates: ~/.pyenv/versions/{{ python2.version }}
+        cmd: "{{ pyenv_dir }}/bin/pyenv install {{ python2.version }}"
+        creates: "{{ pyenv_dir }}/versions/{{ python2.version }}"
 
     - name: Install Python3
       shell:
-        cmd: ~/.pyenv/bin/pyenv install {{ python3.version }}
-        creates: ~/.pyenv/versions/{{ python3.version }}
+        cmd: "{{ pyenv_dir }}/bin/pyenv install {{ python3.version }}"
+        creates: "{{ pyenv_dir }}/versions/{{ python3.version }}"
 
     - name: Symlink Python2
       file:
-        src: ~/.pyenv/versions/{{ python2.version }}
-        dest: "{{ python2.path }}"
+        src: "{{ pyenv_dir }}/versions/{{ python2.version }}"
+        dest: "{{ python2.dir }}"
         state: link
 
     - name: Symlink Python3
       file:
-        src: ~/.pyenv/versions/{{ python3.version }}
-        dest: "{{ python3.path }}"
+        src: "{{ pyenv_dir }}/versions/{{ python3.version }}"
+        dest: "{{ python3.dir }}"
         state: link
 
     - name: Install Python2 deps
       pip:
-        requirements: ~/munitions/requirements.txt
-        executable: "{{ python2.path }}/bin/pip"
+        requirements: "{{ munitions_dir }}/requirements.txt"
+        executable: "{{ python2.dir }}/bin/pip"
 
     - name: Install Python3 deps
       pip:
-        requirements: ~/munitions/requirements.txt
-        executable: "{{ python3.path }}/bin/pip"
+        requirements: "{{ munitions_dir }}/requirements.txt"
+        executable: "{{ python3.dir }}/bin/pip"
+
+    # TODO - SSH keys
+    # TODO - dot files
+    # TODO - Afternoon Commander
+    # TODO - crontabs
+

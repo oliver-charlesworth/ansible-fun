@@ -8,3 +8,6 @@ services:
 
   abc001:
     build: .
+
+  abc002:
+    build: .
