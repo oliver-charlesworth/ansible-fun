@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  bastion:
+    build: .
+    volumes:
+      - ".:/home/bob/work"
+
+  abc001:
+    build: .
