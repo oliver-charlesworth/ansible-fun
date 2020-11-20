@@ -1,10 +1,21 @@
 FROM fedora:28
 
+# Simulates what should be on hosts already
 RUN yum install -y \
     openssh-server \
     openssh-clients \
     python \
-    which
+    which \
+    findutils \
+    unzip \
+    rsync \
+    make automake gcc \
+    git \
+    openssl-devel libffi-devel
+
+# Needed only for this experiment
+RUN yum install -y \
+    ansible
 
 RUN ssh-keygen -A
 RUN useradd bob

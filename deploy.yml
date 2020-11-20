@@ -1,0 +1,69 @@
+---
+- hosts: all
+  remote_user: bob
+
+  vars:
+    python2:
+      path: ~/opt/python2
+      version: 2.7.18
+    python3:
+      path: ~/opt/python3
+      version: 3.7.9
+
+  tasks:
+    - name: Sync munitions
+      synchronize:
+        src: munitions/
+        dest: ~/munitions/
+        delete: yes
+        recursive: yes
+
+    - name: Make opt/
+      file:
+        path: ~/opt/
+        state: directory
+
+    # Obtained from https://download.java.net/java/GA/jdk15.0.1/51f4f36ad4ef43e39d0dfdbaf6549e32/9/GPL/openjdk-15.0.1_linux-x64_bin.tar.gz
+    # SHA256: 83ec3a7b1649a6b31e021cde1e58ab447b07fb8173489f27f427e731c89ed84a
+    - name: Deploy JDK15
+      unarchive:
+        src: ~/munitions/downloads/openjdk-15.0.1_linux-x64_bin.tar.gz
+        dest: ~/opt/
+        remote_src: yes
+
+    - name: Get pyenv
+      git:
+        repo: https://github.com/pyenv/pyenv.git
+        dest: ~/.pyenv
+
+    - name: Install Python2
+      shell:
+        cmd: ~/.pyenv/bin/pyenv install {{ python2.version }}
+        creates: ~/.pyenv/versions/{{ python2.version }}
+
+    - name: Install Python3
+      shell:
+        cmd: ~/.pyenv/bin/pyenv install {{ python3.version }}
+        creates: ~/.pyenv/versions/{{ python3.version }}
+
+    - name: Symlink Python2
+      file:
+        src: ~/.pyenv/versions/{{ python2.version }}
+        dest: "{{ python2.path }}"
+        state: link
+
+    - name: Symlink Python3
+      file:
+        src: ~/.pyenv/versions/{{ python3.version }}
+        dest: "{{ python3.path }}"
+        state: link
+
+    - name: Install Python2 deps
+      pip:
+        requirements: ~/munitions/requirements.txt
+        executable: "{{ python2.path }}/bin/pip"
+
+    - name: Install Python3 deps
+      pip:
+        requirements: ~/munitions/requirements.txt
+        executable: "{{ python3.path }}/bin/pip"
