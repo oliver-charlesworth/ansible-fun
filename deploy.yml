@@ -1,6 +1,5 @@
 ---
 - hosts: all
-  remote_user: bob
 
   vars:
     downloads_dir: ~/.ansible/downloads
@@ -8,16 +7,16 @@
     pyenv_dir: ~/.pyenv
 
     pythons:
-      - version: 2.7.18
-        dir: ~/opt/python2
+      # - version: 2.7.18
+      #   dir: ~/opt/python2
 
       - version: 3.7.9
         dir: ~/opt/python3
 
     jdks:
-      - version: 13.0.2
-        url: https://download.java.net/java/GA/jdk13.0.2/d4173c853231432d94f001e99d882ca7/8/GPL/openjdk-13.0.2_linux-x64_bin.tar.gz
-        sha256: acc7a6aabced44e62ec3b83e3b5959df2b1aa6b3d610d58ee45f0c21a7821a71
+      # - version: 13.0.2
+      #   url: https://download.java.net/java/GA/jdk13.0.2/d4173c853231432d94f001e99d882ca7/8/GPL/openjdk-13.0.2_linux-x64_bin.tar.gz
+      #   sha256: acc7a6aabced44e62ec3b83e3b5959df2b1aa6b3d610d58ee45f0c21a7821a71
 
       - version: 15.0.1
         url: https://download.java.net/java/GA/jdk15.0.1/51f4f36ad4ef43e39d0dfdbaf6549e32/9/GPL/openjdk-15.0.1_linux-x64_bin.tar.gz
@@ -81,7 +80,7 @@
     - name: Install Python
       shell:
         cmd: "{{ pyenv_dir }}/bin/pyenv install {{ item.version }}"
-        creates: "{{ pyenv_dir }}/versions/{{ item.version }}"
+        creates: "{{ pyenv_dir }}/versions/{{ item.version }}/bin/python"
       loop: "{{ pythons }}"
 
     - name: Symlink Python

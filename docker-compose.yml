@@ -11,3 +11,6 @@ services:
 
   abc002:
     build: .
+
+  job9:
+    build: .

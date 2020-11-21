@@ -18,16 +18,9 @@ RUN yum install -y \
 RUN yum install -y \
     ansible
 
+ARG users="bob dev prod"
+COPY keys /keys
 RUN ssh-keygen -A
-RUN useradd bob
-
-COPY keys /home/bob/.ssh
-
-RUN \
-    cd /home/bob && \
-    chmod 700 .ssh && \
-    cat .ssh/id_rsa.pub >> .ssh/authorized_keys && \
-    chmod 600 .ssh/* && \
-    chown -R bob: .ssh
+RUN for user in ${users}; do /keys/setup-user.sh ${user}; done && rm -rf /keys
 
 CMD ["/usr/sbin/sshd", "-D"]
