@@ -4,13 +4,31 @@
 
   vars:
     downloads_dir: ~/.ansible/downloads
-    munitions_dir: ~/.ansible/munitions
+
     pyenv_dir: ~/.pyenv
+
     pythons:
-      - { dir: ~/opt/python2, version: 2.7.18 }
-      - { dir: ~/opt/python3, version: 3.7.9 }
+      - version: 2.7.18
+        dir: ~/opt/python2
+
+      - version: 3.7.9
+        dir: ~/opt/python3
+
+    jdks:
+      - version: 13.0.2
+        url: https://download.java.net/java/GA/jdk13.0.2/d4173c853231432d94f001e99d882ca7/8/GPL/openjdk-13.0.2_linux-x64_bin.tar.gz
+        sha256: acc7a6aabced44e62ec3b83e3b5959df2b1aa6b3d610d58ee45f0c21a7821a71
+
+      - version: 15.0.1
+        url: https://download.java.net/java/GA/jdk15.0.1/51f4f36ad4ef43e39d0dfdbaf6549e32/9/GPL/openjdk-15.0.1_linux-x64_bin.tar.gz
+        sha256: 83ec3a7b1649a6b31e021cde1e58ab447b07fb8173489f27f427e731c89ed84a
 
   tasks:
+
+    # --------------------- #
+    # Basics
+    # --------------------- #
+
     - name: Make downloads dir
       file:
         path: "{{ downloads_dir }}"
@@ -21,24 +39,39 @@
         path: ~/opt/
         state: directory
 
-    - name: Sync munitions
-      synchronize:
-        src: munitions/
-        dest: "{{ munitions_dir }}"
-        delete: yes
-        recursive: yes
+    # --------------------- #
+    # Config files
+    # --------------------- #
 
-    - name: Get JDK15
+    - name: Create dot files
+      copy:
+        src: munitions/{{ item }}
+        dest: ~/
+      loop:
+        - .bash_profile
+        - .bashrc
+
+    # --------------------- #
+    # Java
+    # --------------------- #
+
+    - name: Get JDK
       get_url:
-        url: https://download.java.net/java/GA/jdk15.0.1/51f4f36ad4ef43e39d0dfdbaf6549e32/9/GPL/openjdk-15.0.1_linux-x64_bin.tar.gz
-        dest: "{{ downloads_dir }}/jdk15.tar.gz"
-        checksum: sha256:83ec3a7b1649a6b31e021cde1e58ab447b07fb8173489f27f427e731c89ed84a
+        url: "{{ item.url }}"
+        dest: "{{ downloads_dir }}/jdk{{ item.version }}.tar.gz"
+        checksum: "sha256:{{ item.sha256 }}"
+      loop: "{{ jdks }}"
 
-    - name: Deploy JDK15
+    - name: Deploy JDK
       unarchive:
-        src: "{{ downloads_dir }}/jdk15.tar.gz"
+        src: "{{ downloads_dir }}/jdk{{ item.version }}.tar.gz"
         dest: ~/opt/
         remote_src: yes
+      loop: "{{ jdks }}"
+
+    # --------------------- #
+    # Python
+    # --------------------- #
 
     - name: Get pyenv
       git:
@@ -60,12 +93,17 @@
 
     - name: Install Python deps
       pip:
-        requirements: "{{ munitions_dir }}/requirements.txt"
         executable: "{{ item.dir }}/bin/pip"
+        name:
+          - requests
+          - pymysql
       loop: "{{ pythons }}"
 
+    # --------------------- #
+    # TODO
+    # --------------------- #
+
     # TODO - SSH keys
-    # TODO - dot files
     # TODO - Afternoon Commander
     # TODO - crontabs
 

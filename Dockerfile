@@ -11,7 +11,8 @@ RUN yum install -y \
     rsync \
     make automake gcc \
     git \
-    openssl-devel libffi-devel
+    openssl-devel libffi-devel \
+    cronie
 
 # Needed only for this experiment
 RUN yum install -y \
